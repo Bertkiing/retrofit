@@ -408,6 +408,8 @@ public final class Retrofit {
   }
 
   /**
+   * 此处利用建造者模式来创建Retrofit的实例
+   *
    * Build a new {@link Retrofit}.
    * <p>
    * Calling {@link #baseUrl} is required before calling {@link #build()}. All other methods
@@ -552,7 +554,11 @@ public final class Retrofit {
       return this;
     }
 
-    /** Add converter factory for serialization and deserialization of objects. */
+    /**
+     * addConverterFactory()其实就是在converterFactories中添加一个Converter.Factory
+     *
+     * Add converter factory for serialization and deserialization of objects.
+     */
     public Builder addConverterFactory(Converter.Factory factory) {
       converterFactories.add(Objects.requireNonNull(factory, "factory == null"));
       return this;
@@ -603,6 +609,12 @@ public final class Retrofit {
      * <p>
      * Note: If neither {@link #client} nor {@link #callFactory} is called a default {@link
      * OkHttpClient} will be created and used.
+     *
+     * 注意:如果client 和 callFactory都没有被调用，则默认创建并使用OkHttpClient
+     *
+     * 这里其实需要明白的是：OkHttpClient 本质上就是CallFactory。通过查看client() & callFactory()
+     *
+     * neither A nor B ：A，B两者都不
      */
     public Retrofit build() {
       if (baseUrl == null) {
@@ -619,14 +631,23 @@ public final class Retrofit {
         callbackExecutor = platform.defaultCallbackExecutor();
       }
 
+      /**
+       * defensive :防御性拷贝(保护性拷贝)
+       */
       // Make a defensive copy of the adapters and add the default Call adapter.
       List<CallAdapter.Factory> callAdapterFactories = new ArrayList<>(this.callAdapterFactories);
       callAdapterFactories.addAll(platform.defaultCallAdapterFactories(callbackExecutor));
 
+      /**
+       * 这里注意：在初始化List时，就已经把初始容量给出来
+       */
       // Make a defensive copy of the converters.
-      List<Converter.Factory> converterFactories = new ArrayList<>(
-          1 + this.converterFactories.size() + platform.defaultConverterFactoriesSize());
+      List<Converter.Factory> converterFactories =
+              new ArrayList<>(1 + this.converterFactories.size() + platform.defaultConverterFactoriesSize());
 
+      /**
+       * 先添加内置的converter facotry:BuiltInConverters
+       */
       // Add the built-in converter factory first. This prevents overriding its behavior but also
       // ensures correct behavior when using converters that consume all types.
       converterFactories.add(new BuiltInConverters());
