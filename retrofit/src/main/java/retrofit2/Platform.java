@@ -29,6 +29,12 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
+/**
+ * 对于平台这个类，需要我们注意的是：
+ * 1. Android平台 & Java8平台
+ * 2.对于Android平台来讲，又一个MainThreadExecutor(主线程执行者)，这也意味着 Retrofit的异步网络请求最终都会回调到主线程中。
+ * 3.见识了defaultCallAdapterFactories中的SingleList,SingleMap,SingleSet
+ */
 class Platform {
   private static final Platform PLATFORM = findPlatform();
 
@@ -37,6 +43,9 @@ class Platform {
   }
 
   private static Platform findPlatform() {
+    /**
+     * Android平台
+     */
     try {
       Class.forName("android.os.Build");
       if (Build.VERSION.SDK_INT != 0) {
@@ -44,6 +53,9 @@ class Platform {
       }
     } catch (ClassNotFoundException ignored) {
     }
+    /**
+     * Java8平台
+     */
     return new Platform(true);
   }
 
@@ -57,9 +69,19 @@ class Platform {
     return null;
   }
 
+  /**
+   * 其是Collections中的静态方法
+   *
+   * 注意这里的singletonList(obj) ,singletonMap(K,V),singleton()返回一个singletonSet(obj)
+   *
+   * @param callbackExecutor
+   * @return
+   */
   List<? extends CallAdapter.Factory> defaultCallAdapterFactories(
       @Nullable Executor callbackExecutor) {
+
     DefaultCallAdapterFactory executorFactory = new DefaultCallAdapterFactory(callbackExecutor);
+
     return hasJava8Types
         ? asList(CompletableFutureCallAdapterFactory.INSTANCE, executorFactory)
         : singletonList(executorFactory);
@@ -95,6 +117,9 @@ class Platform {
         .invokeWithArguments(args);
   }
 
+  /**
+   * Android平台
+   */
   static final class Android extends Platform {
     Android() {
       super(Build.VERSION.SDK_INT >= 24);

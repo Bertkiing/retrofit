@@ -24,18 +24,28 @@ import java.util.concurrent.Executor;
 import javax.annotation.Nullable;
 import okhttp3.Request;
 
+/**
+ * 默认的调用适配器工厂
+ */
 final class DefaultCallAdapterFactory extends CallAdapter.Factory {
+
   private final @Nullable Executor callbackExecutor;
 
   DefaultCallAdapterFactory(@Nullable Executor callbackExecutor) {
     this.callbackExecutor = callbackExecutor;
   }
 
-  @Override public @Nullable CallAdapter<?, ?> get(
-      Type returnType, Annotation[] annotations, Retrofit retrofit) {
+  @Override
+  public @Nullable CallAdapter<?, ?> get(
+      Type returnType,
+      Annotation[] annotations,
+      Retrofit retrofit
+  ) {
+
     if (getRawType(returnType) != Call.class) {
       return null;
     }
+
     if (!(returnType instanceof ParameterizedType)) {
       throw new IllegalArgumentException(
           "Call return type must be parameterized as Call<Foo> or Call<? extends Foo>");
@@ -60,7 +70,13 @@ final class DefaultCallAdapterFactory extends CallAdapter.Factory {
   }
 
   static final class ExecutorCallbackCall<T> implements Call<T> {
+    /**
+     * 用于回调的Executor（即：Android的Platform中的MainThreadExector）
+     */
     final Executor callbackExecutor;
+    /**
+     * 代理call,真正执行的call
+     */
     final Call<T> delegate;
 
     ExecutorCallbackCall(Executor callbackExecutor, Call<T> delegate) {
@@ -68,11 +84,17 @@ final class DefaultCallAdapterFactory extends CallAdapter.Factory {
       this.delegate = delegate;
     }
 
+    /**
+     *发送异步请求
+     */
     @Override public void enqueue(final Callback<T> callback) {
       Objects.requireNonNull(callback, "callback == null");
 
       delegate.enqueue(new Callback<T>() {
         @Override public void onResponse(Call<T> call, final Response<T> response) {
+          /**
+           * 发送响应到UIThread（For Android）
+           */
           callbackExecutor.execute(() -> {
             if (delegate.isCanceled()) {
               // Emulate OkHttp's behavior of throwing/delivering an IOException on cancellation.
@@ -93,10 +115,18 @@ final class DefaultCallAdapterFactory extends CallAdapter.Factory {
       return delegate.isExecuted();
     }
 
+    /**
+     * 同步执行
+     * @return
+     * @throws IOException
+     */
     @Override public Response<T> execute() throws IOException {
       return delegate.execute();
     }
 
+    /**
+     * 取消该Call,即：在okhttp的call池中移除
+     */
     @Override public void cancel() {
       delegate.cancel();
     }

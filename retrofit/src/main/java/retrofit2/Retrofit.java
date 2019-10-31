@@ -63,12 +63,24 @@ import static java.util.Collections.unmodifiableList;
  * @author Jake Wharton (jw@squareup.com)
  */
 public final class Retrofit {
+  /**
+   * 注意这里是ConcurrentHashMap
+   */
   private final Map<Method, ServiceMethod<?>> serviceMethodCache = new ConcurrentHashMap<>();
 
   final okhttp3.Call.Factory callFactory;
   final HttpUrl baseUrl;
+  /**
+   * 数据解析器工厂
+   */
   final List<Converter.Factory> converterFactories;
+  /**
+   * 网络请求适配器工厂
+   */
   final List<CallAdapter.Factory> callAdapterFactories;
+  /**
+   * 线程池
+   */
   final @Nullable Executor callbackExecutor;
   final boolean validateEagerly;
 
@@ -182,6 +194,11 @@ public final class Retrofit {
     }
   }
 
+  /**
+   * 加载服务方法
+   * @param method
+   * @return
+   */
   ServiceMethod<?> loadServiceMethod(Method method) {
     ServiceMethod<?> result = serviceMethodCache.get(method);
     if (result != null) return result;
@@ -653,7 +670,7 @@ public final class Retrofit {
       converterFactories.add(new BuiltInConverters());
       converterFactories.addAll(this.converterFactories);
       converterFactories.addAll(platform.defaultConverterFactories());
-
+      // 注意这里使用 Collections.unmodifiableList()的使用
       return new Retrofit(callFactory, baseUrl, unmodifiableList(converterFactories),
           unmodifiableList(callAdapterFactories), callbackExecutor, validateEagerly);
     }

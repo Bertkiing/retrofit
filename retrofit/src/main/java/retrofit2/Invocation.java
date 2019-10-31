@@ -22,9 +22,12 @@ import java.util.List;
 import java.util.Objects;
 
 /**
+ * (Retrofit服务接口方法的一个单独调用。这个类用来捕捉被调用的方法以及该方法的参数)
+ *
  * A single invocation of a Retrofit service interface method. This class captures both the method
  * that was called and the arguments to the method.
  *
+ * Retrofit自动地为每个OkHttp请求添加一个tag.你可以在OkHttp用于测量&监视的拦截器中检索此次调用。
  * <p>Retrofit automatically adds an invocation to each OkHttp request as a tag. You can retrieve
  * the invocation in an OkHttp interceptor for metrics and monitoring.
  *
@@ -47,6 +50,8 @@ import java.util.Objects;
  * arguments list is unmodifiable, the arguments themselves may be mutable. They may also be unsafe
  * for concurrent access. For best results declare Retrofit service interfaces using only immutable
  * types for parameters!
+ *
+ * Invocation ：调用
  */
 public final class Invocation {
   public static Invocation of(Method method, List<?> arguments) {
